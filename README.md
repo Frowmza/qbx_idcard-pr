@@ -6,7 +6,7 @@ Physical ID cards for Qbox. The card is a real prop in the player's hand. Its fr
 - **Hand over (J):** the other player has to accept (rebind it under Settings > Key Bindings > FiveM). The card then moves into their hand and they can look at it, flip it and hand it back. If they walk away or disconnect, it returns to the owner.
 - **Look (F):** close-up camera. Move the mouse to tilt the card and catch the hologram, press Space to flip it to the back.
 - The photo is taken when the card is issued and stays on that card.
-- The design follows Qbox: a black card with duck-yellow accents and the pixel duck, and a kraft-box back with a QBOX stamp. Each card type has its own accent colour.
+- The design is a modern state ID: a dark front with security-print lines, a hologram and a machine-readable zone, and a light back with a barcode and the state seal. Each card type has its own accent colour. The badge shows `issuer.emblem` from `configs/server.lua` (the Qbox duck by default), and the seal follows `issuer.state`.
 
 ## Requirements
 

@@ -47,44 +47,50 @@ const image = (className, src) => {
   return img;
 };
 
-const star = () => {
-  const svg = svgEl('svg', { viewBox: '0 0 100 100' });
+let sealCount = 0;
+
+const seal = (state) => {
+  const id = `seal-${sealCount++}`;
+  const svg = svgEl('svg', { class: 'seal', viewBox: '0 0 200 200' });
+  const defs = svgEl('defs', {});
+  defs.appendChild(svgEl('path', { id, d: 'M 100 100 m -72 0 a 72 72 0 1 1 144 0 a 72 72 0 1 1 -144 0' }));
+  svg.appendChild(defs);
+  svg.appendChild(svgEl('circle', { cx: 100, cy: 100, r: 96, fill: 'none', stroke: 'currentColor', 'stroke-width': 5 }));
+  svg.appendChild(svgEl('circle', { cx: 100, cy: 100, r: 86, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+  svg.appendChild(svgEl('circle', { cx: 100, cy: 100, r: 56, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }));
+  const ring = svgEl('text', { 'font-size': 16, 'font-weight': 800, 'letter-spacing': 2, fill: 'currentColor' });
+  const path = svgEl('textPath', { href: `#${id}`, startOffset: '50%', 'text-anchor': 'middle' });
+  path.textContent = `STATE OF ${String(state || '').toUpperCase()} \u2605 OFFICIAL SEAL \u2605`;
+  ring.appendChild(path);
+  svg.appendChild(ring);
   const points = [];
   for (let i = 0; i < 10; i++) {
-    const r = i % 2 === 0 ? 46 : 19;
+    const r = i % 2 === 0 ? 40 : 16;
     const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    points.push(`${(50 + Math.cos(a) * r).toFixed(1)},${(50 + Math.sin(a) * r).toFixed(1)}`);
+    points.push(`${(100 + Math.cos(a) * r).toFixed(1)},${(100 + Math.sin(a) * r).toFixed(1)}`);
   }
   svg.appendChild(svgEl('polygon', { points: points.join(' '), fill: 'currentColor' }));
   return svg;
 };
 
-const pixels = (rand) => {
-  const box = el('div', 'pixels');
-  for (let y = 0; y < 256; y += 16) {
-    for (let x = 560; x < 1024; x += 16) {
-      const fade = Math.max(0, (x - 560) / 464) * Math.max(0, 1 - y / 256);
-      if (rand() < fade * fade * 0.55) {
-        const i = el('i');
-        i.style.left = `${x}px`;
-        i.style.top = `${y}px`;
-        i.style.opacity = (0.08 + rand() * 0.35 * fade).toFixed(3);
-        box.appendChild(i);
-      }
-    }
-  }
-  return box;
+const stateSeal = (card, className) => {
+  const node = seal(card.state);
+  node.classList.add(className);
+  return node;
 };
 
-const fibers = (seed) => {
-  const svg = svgEl('svg', { class: 'fibers', viewBox: '0 0 1024 646', preserveAspectRatio: 'none' });
-  const defs = svgEl('defs', {});
-  const filter = svgEl('filter', { id: `fibers-${seed}` });
-  filter.appendChild(svgEl('feTurbulence', { type: 'fractalNoise', baseFrequency: '0.06 0.5', numOctaves: 3, seed }));
-  filter.appendChild(svgEl('feColorMatrix', { type: 'matrix', values: '0 0 0 0 0.42  0 0 0 0 0.27  0 0 0 0 0.12  0 0 0 0.9 0' }));
-  defs.appendChild(filter);
-  svg.appendChild(defs);
-  svg.appendChild(svgEl('rect', { width: 1024, height: 646, filter: `url(#fibers-${seed})` }));
+const guilloche = (width, height, lines, className) => {
+  const svg = svgEl('svg', { class: className, viewBox: `0 0 ${width} ${height}`, preserveAspectRatio: 'none' });
+  for (let i = 0; i < lines; i++) {
+    const phase = (i / lines) * Math.PI * 2;
+    const amp = 18 + (i % 5) * 6;
+    let d = '';
+    for (let x = 0; x <= width; x += 8) {
+      const y = height / 2 + Math.sin(x / 70 + phase) * amp + Math.sin(x / 23 + phase * 2) * 6 + (i - lines / 2) * (height / lines);
+      d += `${x === 0 ? 'M' : 'L'} ${x} ${y.toFixed(1)} `;
+    }
+    svg.appendChild(svgEl('path', { d, fill: 'none', stroke: 'currentColor', 'stroke-width': 1 }));
+  }
   return svg;
 };
 
@@ -158,7 +164,7 @@ const linear = (canvas, rand) => {
   const w = (canvas.width = 440);
   const h = (canvas.height = 58);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#3a2410';
+  ctx.fillStyle = '#20252c';
   let x = 0;
   let black = true;
   while (x < w) {
@@ -169,25 +175,16 @@ const linear = (canvas, rand) => {
   }
 };
 
-const thisSideUp = () => {
-  const svg = svgEl('svg', { viewBox: '0 0 54 54' });
-  for (const x of [8, 32]) {
-    svg.appendChild(svgEl('path', { d: `M ${x + 7} 4 L ${x + 14} 16 L ${x + 10} 16 L ${x + 10} 30 L ${x + 4} 30 L ${x + 4} 16 L ${x} 16 Z`, fill: 'currentColor' }));
-  }
-  svg.appendChild(svgEl('rect', { x: 4, y: 40, width: 46, height: 5, fill: 'currentColor' }));
-  return svg;
-};
-
 const renderFront = (card, photo, rand) => {
   front.replaceChildren();
   front.appendChild(el('div', 'grid'));
-  front.appendChild(pixels(rand));
-  if (card.emblem) front.appendChild(image('watermark', card.emblem));
+  front.appendChild(guilloche(1024, 646, 26, 'security'));
+  front.appendChild(stateSeal(card, 'watermark'));
 
   const header = el('div', 'header');
   const brand = el('div', 'brand');
   const badge = el('div', 'badge');
-  badge.appendChild(card.emblem ? image('', card.emblem) : star());
+  badge.appendChild(card.emblem ? image('crest', card.emblem) : stateSeal(card, 'crest'));
   brand.appendChild(badge);
   const state = el('div', 'state', card.state.toUpperCase());
   state.appendChild(el('small', '', `STATE OF ${card.state} // ${card.country || 'USA'}`.toUpperCase()));
@@ -219,7 +216,7 @@ const renderFront = (card, photo, rand) => {
 
   const foil = el('div', 'foil');
   if (photo) foil.appendChild(image('ghost', photo));
-  if (card.emblem) foil.appendChild(image('mark', card.emblem));
+  foil.appendChild(stateSeal(card, 'mark'));
   front.appendChild(foil);
 
   const signature = el('div', 'signature', `${card.firstname || ''} ${card.lastname || ''}`.trim());
@@ -233,8 +230,7 @@ const renderFront = (card, photo, rand) => {
 
 const renderBack = (card, rand) => {
   back.replaceChildren();
-  back.appendChild(fibers(Math.floor(rand() * 1000)));
-  back.appendChild(el('div', 'crease'));
+  back.appendChild(guilloche(1024, 646, 34, 'security'));
 
   const label = el('div', 'label');
   const head = el('header');
@@ -245,8 +241,6 @@ const renderBack = (card, rand) => {
   pdf417(canvas, rand);
   label.appendChild(canvas);
   back.appendChild(label);
-  back.appendChild(el('div', 'tape left'));
-  back.appendChild(el('div', 'tape right'));
 
   const print = el('div', 'print');
   print.appendChild(el('h3', '', `${card.state} ${card.agency}`));
@@ -257,10 +251,7 @@ const renderBack = (card, rand) => {
   print.appendChild(el('div', 'legal', card.legal || ''));
   back.appendChild(print);
 
-  const stamp = el('div', 'stamp');
-  stamp.appendChild(el('b', '', 'QBOX'));
-  stamp.appendChild(el('span', '', 'VERIFIED'));
-  back.appendChild(stamp);
+  back.appendChild(stateSeal(card, 'stamp'));
 
   const barcode = el('div', 'barcode');
   const bar = el('canvas');
@@ -272,11 +263,6 @@ const renderBack = (card, rand) => {
   const dd = el('div', 'dd', 'DOCUMENT');
   dd.appendChild(el('b', '', card.dd || ''));
   back.appendChild(dd);
-
-  const arrows = el('div', 'arrows');
-  arrows.appendChild(el('span', '', 'THIS SIDE UP'));
-  arrows.appendChild(thisSideUp());
-  back.appendChild(arrows);
 
   back.appendChild(el('div', 'holo'));
 };
